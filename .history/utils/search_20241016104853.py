@@ -4,12 +4,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from urllib.parse import quote
 from pprint import pprint
+from time import sleep
 from .objects import Scraper
 from .person import Person
 import os
 import re
 import random
-import requests
 
 
 class Search(Scraper):
@@ -47,14 +47,21 @@ class Search(Scraper):
             self.scrape_logged_in()
         else:
             self.login = False
-            print("登录失败, 请重新登录")
-    
-    def scrape_logged_in(self):
-        WebDriverWait(self.driver, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "scaffold-layout__main"))
-        )
-        self.scroll_to_bottom()
-        self.get_users()
+            print("登录失败")
+
+    def submitData(params):
+        try:
+            response = requests.get("http://172.30.20.244/pull-msg", params=params)
+            if response.status_code == 200:
+                # 请求成功，处理响应数据
+                data = response.json()
+                print(data)
+            else:
+                # 请求失败，打印状态码和错误信息
+                print(f"上传数据失败，状态码：{response.status_code}")
+        except Exception as e:
+            print("上传数据失败")
+            pass
 
     def get_time_number(self, text):
         match = re.search(r"\d+", text)
@@ -77,7 +84,7 @@ class Search(Scraper):
         return num
 
     def get_users(self):
-        random_number = random.randint(30, 60)
+        random_number = random.randint(15, 30)
         print(f"随机等待{random_number}秒")
         self.wait(random_number)
         page_elment = WebDriverWait(self.driver, 10).until(
@@ -152,13 +159,13 @@ class Search(Scraper):
                             if is_continue == False:
                                 return self.login
                     else:
-                        print(f"执行搜索{self.keyword}结束")
+                        print("查询结束")
                         return self.login
 
                 except Exception as e:
                     pass
         except Exception as e:
-            print(f"搜索{self.keyword}失败")
+            print("获取搜索结果失败")
             return self.login
 
         if current_page == total_page:
@@ -170,7 +177,6 @@ class Search(Scraper):
     def get_info(self, link, recent):
         person = Person(link, driver=self.driver)
         person_result = person.to_dict()
-        result = True
         if person_result["login"] and person_result["open_to_work"]:
             params = {
                 "kh_name": person_result["name"],
@@ -183,30 +189,24 @@ class Search(Scraper):
                 "key_word": self.keyword,
             }
             pprint(params)
-            self.submit_user_data(params)
+            self.submitData(params)
+            sleep(2)
+            return True
         elif person_result["login"] == False:
             self.login = False
-            result = False
-        random_number = random.randint(15, 30)
-        print(f"随机等待{random_number}秒")
-        self.wait(random_number)
-        return result
+            return False
+        else:
+            return True
 
-    def submit_user_data(params):
-        print(f"上传用户{params["kh_name"]}数据")
-        try:
-            response = requests.get("http://172.30.20.244/pull-msg", params=params)
-            if response.status_code == 200:
-                # 请求成功，处理响应数据
-                data = response.json()
-                print(data)
-            else:
-                # 请求失败，打印状态码和错误信息
-                print(f"上传用户{params["kh_name"]}数据失败，状态码：{response.status_code}")
-        except Exception as e:
-            print(f"上传用户{params["kh_name"]}数据失败")
-            pass
+    def scrape_logged_in(self):
+        WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "scaffold-layout__main"))
+        )
+        self.scroll_to_bottom()
+        self.get_users()
 
     def to_dict(self):
         """将对象转换为字典"""
-        return self.login
+        return {
+            "login": self.login
+        }

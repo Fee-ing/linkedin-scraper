@@ -4,12 +4,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from urllib.parse import quote
 from pprint import pprint
+from time import sleep
 from .objects import Scraper
 from .person import Person
 import os
 import re
 import random
-import requests
 
 
 class Search(Scraper):
@@ -48,13 +48,20 @@ class Search(Scraper):
         else:
             self.login = False
             print("登录失败, 请重新登录")
-    
-    def scrape_logged_in(self):
-        WebDriverWait(self.driver, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "scaffold-layout__main"))
-        )
-        self.scroll_to_bottom()
-        self.get_users()
+
+    def submitData(params):
+        try:
+            response = requests.get("http://172.30.20.244/pull-msg", params=params)
+            if response.status_code == 200:
+                # 请求成功，处理响应数据
+                data = response.json()
+                print(data)
+            else:
+                # 请求失败，打印状态码和错误信息
+                print(f"上传数据失败，状态码：{response.status_code}")
+        except Exception as e:
+            print("上传数据失败")
+            pass
 
     def get_time_number(self, text):
         match = re.search(r"\d+", text)
@@ -183,29 +190,18 @@ class Search(Scraper):
                 "key_word": self.keyword,
             }
             pprint(params)
-            self.submit_user_data(params)
+            self.submitData(params)
         elif person_result["login"] == False:
             self.login = False
             result = False
-        random_number = random.randint(15, 30)
-        print(f"随机等待{random_number}秒")
-        self.wait(random_number)
         return result
 
-    def submit_user_data(params):
-        print(f"上传用户{params["kh_name"]}数据")
-        try:
-            response = requests.get("http://172.30.20.244/pull-msg", params=params)
-            if response.status_code == 200:
-                # 请求成功，处理响应数据
-                data = response.json()
-                print(data)
-            else:
-                # 请求失败，打印状态码和错误信息
-                print(f"上传用户{params["kh_name"]}数据失败，状态码：{response.status_code}")
-        except Exception as e:
-            print(f"上传用户{params["kh_name"]}数据失败")
-            pass
+    def scrape_logged_in(self):
+        WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "scaffold-layout__main"))
+        )
+        self.scroll_to_bottom()
+        self.get_users()
 
     def to_dict(self):
         """将对象转换为字典"""

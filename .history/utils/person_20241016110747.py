@@ -69,23 +69,7 @@ class Person(Scraper):
         else:
             self.login = False
             print("登录失败, 请重新登录")
-
-    def scrape_logged_in(self):
-        driver = self.driver
-
-        WebDriverWait(driver, self.__WAIT_FOR_ELEMENT_TIMEOUT).until(
-            EC.presence_of_element_located((By.CLASS_NAME, self.__TOP_CARD))
-        )
-
-        self.get_base_user_info()
-
-        # self.get_recent_time()
-
-        # self.get_may_know()
-
-        # random_number = random.randint(60, 90)
-        # print(f"随机等待{random_number}秒")
-        # self.wait(random_number)
+            # self.driver.quit()
 
     def get_base_user_info(self):
         self.focus()
@@ -201,6 +185,23 @@ class Person(Scraper):
         random_number2 = random.randint(30, 60)
         print(f"随机等待{random_number2}秒")
         self.wait(random_number2)
+
+    def scrape_logged_in(self):
+        driver = self.driver
+
+        WebDriverWait(driver, self.__WAIT_FOR_ELEMENT_TIMEOUT).until(
+            EC.presence_of_element_located((By.CLASS_NAME, self.__TOP_CARD))
+        )
+
+        self.get_base_user_info()
+
+        # self.get_recent_time()
+
+        # self.get_may_know()
+
+        # random_number = random.randint(60, 90)
+        # print(f"随机等待{random_number}秒")
+        # self.wait(random_number)
 
     def close(self):
         self.driver.close()

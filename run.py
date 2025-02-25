@@ -9,9 +9,8 @@ import os
 import signal
 import subprocess
 
-# 13305899774
-email = "kjdsjh@163.com"
-password = "Wen3597135"
+email = ""
+password = ""
 cookie = ""
 
 
